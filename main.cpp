@@ -3,6 +3,7 @@
 
 #include "rsa_utils.h"
 #include "aes_utils.h"
+#include "firmas.h"
 
 using namespace std;
 using namespace CryptoPP;
@@ -46,5 +47,32 @@ int main() {
 
     // Cifrado Asimétrico con RSA: Simulando un cifrado de un mensaje con RSA
     cout << " ----------------------------- Cifrado Asimétrico con RSA -----------------------------" << endl;
-    mensaje = "Los archivos antiguos, código MPSH476, revelan la ubicación del séptimo pergamino perdido ";
+    mensaje = "Los archivos antiguos, código MPSH476, revelan la ubicación del séptimo pergamino perdido "; // Mensaje proveniente de la hermana Lyra
+    cout << "Mensaje a cifrar: " << mensaje << endl;
+    cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -" << endl;
+    // Para que solamente el Gran Maestro pueda descifrar el mensaje, utilizaremos firmas digitales.
+    
+
+
+    // Emisor (Lyra) -> Receptor (Gran Maestro)
+
+    // a. Lyra firma el mensaje con su clave privada
+    string pathClavePrivadaLyra = "Claves/lyra_privada.pem";
+    string firmaLyra = rsa_sign(mensaje, pathClavePrivadaLyra); // Firma del mensaje con la clave privada de Lyra
+    cout << "Firma de Lyra: " << firmaLyra << endl;
+
+
+    /*
+    
+    // Paso 1: Encriptar el mensaje con la clave privada de Lyra
+    string pathClavePrivada = "Claves/lyra_privada.pem"; // Ruta al archivo de clave privada de lyra
+    string cifradoRSA = rsa_encrypt(mensaje, pathClavePrivada, false); // Cifrado del mensaje con la clave privada de Lyra
+    cout << "Mensaje cifrado (RSA): " << cifradoRSA << endl;
+    // Paso 2: Volver a cifrar el mensaje con la clave pública del Gran Maestro
+    string pathClavePublicaGranMaestro = "Claves/gm_publica.pem"; 
+    
+    string cifradoFinal = rsa_encrypt(cifradoRSA, pathClavePublicaGranMaestro, true); // Cifrado del mensaje con la clave pública del Gran Maestro
+    cout << "Mensaje cifrado (RSA con clave pública del Gran Maestro): " << cifradoFinal << endl;
+    
+    */
 }

@@ -8,7 +8,7 @@
 #include <cryptopp/pem.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/filters.h>
-
+#include <cryptopp/pssr.h>
 using namespace std;
 using namespace CryptoPP;
 
@@ -32,47 +32,49 @@ string hexToBin(const string &hex) {
     return bin;
 }
 
-/*
-    Estructura para almacenar el resultado de las operaciones RSA.
-    Contiene el texto cifrado en formato hexadecimal y el mensaje recuperado.
-*/
-struct RSAResult {
-    string cifradoHex;
-    string mensajeRecuperado;
-};
-
-
-string rsa_encrypt_helper( const string &mensaje,const PublicKey &clave_publica) {
-
+// Función que recibe un mensaje y una ruta de clave pública o privada, y devuelve el mensaje cifrado en formato hexadecimal.
+string rsa_encrypt(const string &mensaje, const string &path_clave, bool usePublicKey) {
     AutoSeededRandomPool rng;
     string cifrado;
-    RSAES_OAEP_SHA_Encryptor enc(clave_publica); //
-    StringSource(mensaje, true,new PK_EncryptorFilter(rng, enc,new StringSink(cifrado)));
-    return binToHex(cifrado);
-}
-
-string rsa_encrypt(const string &mensaje,const string &path_clave_publica) {
-    RSA::PublicKey pub_key;
-    FileSource fs(path_clave_publica.c_str(), true);
-    CryptoPP::PEM_Load(fs, pub_key); // Cargar clave pública desde archivo PEM
-    return rsa_encrypt_helper(mensaje, pub_key);
+    if (usePublicKey) {
+        RSA::PublicKey pub_key;
+        FileSource fs(path_clave.c_str(), true);
+        CryptoPP::PEM_Load(fs, pub_key);
+        RSAES_OAEP_SHA_Encryptor encriptador(pub_key); // Crear el encriptador RSA
+        StringSource(mensaje, true, new PK_EncryptorFilter(rng, encriptador, new StringSink(cifrado))); // Cifrar el mensaje
+        cout << "test asdf" << endl;
+        return binToHex(cifrado); // Convertir el mensaje cifrado a formato hexadecimal
+    } else { // Si usePublicKey es false, se asume que se está utilizando una clave privada
+        RSA::PrivateKey priv_key;
+        FileSource fs(path_clave.c_str(), true);
+        CryptoPP::PEM_Load(fs, priv_key);
+        RSAES_OAEP_SHA_Encryptor encriptador(priv_key); // Crear el encriptador RSA
+        StringSource(mensaje, true, new PK_EncryptorFilter(rng, encriptador, new StringSink(cifrado))); // Cifrar el mensaje
+        return binToHex(cifrado); // Convertir el mensaje cifrado a formato hexadecimal
+    }
 }
 
 // ---------- Descifrado ----------
-string rsa_decrypt_helper(const string &cifradoHex,const PrivateKey &clave_privada) {
+string rsa_decrypt(const string &cifradoHex, const string &path_clave, bool usePublicKey) {
     AutoSeededRandomPool rng;
-    string cipher = hexToBin(cifradoHex); // Convertir de HEX a binario
-    string mensaje_recuperado; // Variable para almacenar el mensaje recuperado
-    RSAES_OAEP_SHA_Decryptor decifrador(clave_privada); // Crear el descifrador RSA
-    StringSource(cipher, true,new PK_DecryptorFilter(rng, decifrador,new StringSink(mensaje_recuperado))); // Descifrar el mensaje
-    return mensaje_recuperado;
-}
+    string cifrado = hexToBin(cifradoHex);
+    string mensaje_recuperado;
 
-string rsa_decrypt(const string &cipherHex,const string &privPemPath) {
-    RSA::PrivateKey priv_key; // Declarar clave privada
-    FileSource fs(privPemPath.c_str(), true); // Cargar clave privada desde archivo PEM
-    CryptoPP::PEM_Load(fs, priv_key);
-    return rsa_decrypt_helper(cipherHex, priv_key);
+    if (usePublicKey) { // Si usePublicKey es true, se asume que se está utilizando una clave pública
+        RSA::PublicKey pub_key;
+        FileSource fs(path_clave.c_str(), true);
+        CryptoPP::PEM_Load(fs, pub_key);
+        RSAES_OAEP_SHA_Decryptor decriptador(pub_key); // Crear el decriptador RSA
+        StringSource(cifrado, true, new PK_DecryptorFilter(rng, decriptador, new StringSink(mensaje_recuperado))); // Descifrar el mensaje
+    } else { // Si usePublicKey es false, se asume que se está utilizando una clave privada
+        RSA::PrivateKey priv_key;
+        FileSource fs(path_clave.c_str(), true);
+        CryptoPP::PEM_Load(fs, priv_key);
+        RSAES_OAEP_SHA_Decryptor decriptador(priv_key); // Crear el decriptador RSA
+        StringSource(cifrado, true, new PK_DecryptorFilter(rng, decriptador, new StringSink(mensaje_recuperado))); // Descifrar el mensaje
+    }
+
+    return mensaje_recuperado; // Devolver el mensaje recuperado
 }
 
 

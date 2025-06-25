@@ -10,7 +10,7 @@ SRC      := main.cpp
 
 all: $(TARGET)
 
-$(TARGET): $(SRC) aes_utils.h rsa_utils.h
+$(TARGET): $(SRC) aes_utils.h rsa_utils.h firmas.h
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
 
 clean:
