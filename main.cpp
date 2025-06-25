@@ -47,7 +47,7 @@ int main() {
 
     // Cifrado Asimétrico con RSA: Simulando un cifrado de un mensaje con RSA
     cout << " ----------------------------- Cifrado Asimétrico con RSA -----------------------------" << endl;
-    mensaje = "Los archivos antiguos, código MPSH476, revelan la ubicación del séptimo pergamino perdido "; // Mensaje proveniente de la hermana Lyra
+    mensaje = "Los archivos antiguos, código MPSH476, revelan la ubicación del séptimo pergamino perdido"; // Mensaje proveniente de la hermana Lyra
     cout << "Mensaje a cifrar: " << mensaje << endl;
     cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -" << endl;
     // Para que solamente el Gran Maestro pueda descifrar el mensaje, utilizaremos firmas digitales.
@@ -60,6 +60,15 @@ int main() {
     string pathClavePrivadaLyra = "Claves/lyra_privada.pem";
     string firmaLyra = rsa_sign(mensaje, pathClavePrivadaLyra); // Firma del mensaje con la clave privada de Lyra
     cout << "Firma de Lyra: " << firmaLyra << endl;
+
+    // b. Lyra cifra el mensaje y la firma concatenados con la clave pública del Gran Maestro
+    string pathClavePublicaGranMaestro = "Claves/gm_publica.pem";
+    string mensajeCifrado = rsa_encrypt(mensaje + firmaLyra, pathClavePublicaGranMaestro, true); // Cifrado del mensaje con la clave pública del Gran Maestro
+    cout << "Mensaje cifrado (RSA): " << mensajeCifrado << endl;
+
+
+    // Checkpoint, no pude lograr que se pueda cifrar el mensaje + la firma ya que supera el tamaño maximo.
+
 
 
     /*
