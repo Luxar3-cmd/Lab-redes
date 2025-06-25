@@ -11,24 +11,8 @@
 using namespace CryptoPP;
 using namespace std;
 
-/*
-    Esta función convierte un string binario a su representación hexadecimal.
-*/
-string binToHex(const string &bin) {
-    string hex;
-    StringSource(bin, true, new HexEncoder(new StringSink(hex)));
-    return hex;
-}
 
-/*
-    Esta función convierte un string hexadecimal a su representación binaria.
-    Utiliza HexDecoder para decodificar el string hexadecimal.
-*/
-string hexToBin(const string &hex) {
-    string bin;
-    StringSource(hex, true, new HexDecoder(new StringSink(bin)));
-    return bin;
-}
+
 
 /*
     Estructura para almacenar el resultado de las operaciones AES.
