@@ -8,10 +8,15 @@ using namespace std;
 using namespace CryptoPP;
 
 int main() {
-    // Cifrado Simétrico con AES
+    // Cifrado Simétrico con AES: Simulando un cifrado de un mensaje con AES-128 en modo CBC
 
     // Mensaje a cifrar
+
+    cout << " ----------------------------- Cifrado Simétrico con AES -----------------------------" << endl;
     string mensaje = "La cámara descansa bajo el sauce llorón en el jardín del martillo.";
+    cout << "Mensaje a cifrar: " << mensaje << endl;
+    cout << "--------------------------------------------------------------------------------------" << endl;
+
     // Clave de 16 bytes para AES-128
     CryptoPP::byte clave[CryptoPP::AES::DEFAULT_KEYLENGTH] = {
         0x67, 0x70, 0x81, 0x92, // Word 1
@@ -28,6 +33,12 @@ int main() {
     string cifradoAES = aes_encrypt(mensaje, claveAES, ivHex); // Obtención del texto cifrado
     /*-----------------------------------------------------------------------------*/
     cout << "Texto cifrado (AES): " << cifradoAES << endl;
-    
+
+    cout << " ------------------------- Ahora vamos a descifrar el texto cifrado con AES ------------------------- " << endl;
+    string mensajeRecuperadoAES = aes_decrypt(cifradoAES, claveAES, ivHex); // Descifrado del texto cifrado
+    cout << "Texto recuperado (AES): " << mensajeRecuperadoAES << endl;
+    cout << "--------------------------------------------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------------" << endl;
+    cout << endl;
 
 }
