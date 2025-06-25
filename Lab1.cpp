@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 #include <cryptopp/aes.h> // Para AES
 #include <cryptopp/modes.h> // Para modos de operación (CBC)
@@ -17,7 +18,6 @@
 // Definiciones para evitar escribir CryptoPP:: constantemente
 using namespace CryptoPP;
 using namespace std;
-#include <string>
 
 void cifradoAES() {
     // Mensaje original
@@ -33,16 +33,22 @@ void cifradoAES() {
     };
 
     // Vector de inicialización aleatorio (IV)
-    AutoSeededRandomPool prng;
+    AutoSeededRandomPool prng; // Generador de números aleatorios. 
     CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE];
     prng.GenerateBlock(iv, sizeof(iv));
 
     string cifrado, descifrado;
 
     // Cifrado AES CBC
+    /*  
+        Se instancia un objeto AES, en modalidad CBC (Cipher Block Chaining).
+        Le entrega la clave y el Initial Vector como parámetros, así se configura el cifrador 
+        para procesar texto plano, en este caso nuestro mensaje.
+    */
     CBC_Mode<AES>::Encryption encryptor;
     encryptor.SetKeyWithIV(key, sizeof(key), iv);
 
+    // Aquí se aplica el cifrado
     StringSource ss1(mensaje, true,
         new StreamTransformationFilter(encryptor,
             new StringSink(cifrado)
@@ -50,6 +56,10 @@ void cifradoAES() {
     );
 
     // Descifrado
+    /*
+        El procedimiento es similar al cifrado, 
+        Se instancia un objeto AES con modalidad CBC el cual cumplirá el rol de desencriptar el mensaje.
+    */
     CBC_Mode<AES>::Decryption decryptor;
     decryptor.SetKeyWithIV(key, sizeof(key), iv);
 
