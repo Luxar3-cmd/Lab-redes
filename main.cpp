@@ -8,7 +8,7 @@ using namespace std;
 using namespace CryptoPP;
 
 int main() {
-    // Cifrado Simétrico con AES: Simulando un cifrado de un mensaje con AES-128 en modo CBC
+    // Sección 1: Cifrado Simétrico con AES: Simulando un cifrado de un mensaje con AES-128 en modo CBC
 
     // Mensaje a cifrar
 
@@ -41,4 +41,10 @@ int main() {
     cout << "--------------------------------------------------------------------------------------" << endl;
     cout << endl;
 
+
+
+
+    // Cifrado Asimétrico con RSA: Simulando un cifrado de un mensaje con RSA
+    cout << " ----------------------------- Cifrado Asimétrico con RSA -----------------------------" << endl;
+    mensaje = "Los archivos antiguos, código MPSH476, revelan la ubicación del séptimo pergamino perdido ";
 }
