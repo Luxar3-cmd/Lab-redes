@@ -11,6 +11,7 @@
 #include <cryptopp/files.h>
 #include <cryptopp/pem.h>
 #include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 
 using namespace std;
 using namespace CryptoPP;
@@ -20,7 +21,7 @@ string rsa_sign(const string& mensaje, const string& pathClavePrivada) {
     // Cargar la clave privada desde el archivo
     RSA::PrivateKey clavePrivada;
     FileSource file(pathClavePrivada.c_str(), true);
-    clavePrivada.PEM_Load()
+    PEM_Load(file, clavePrivada);
     // Crear un objeto de firma
     RSASS<PSSR, SHA256>::Signer signer(clavePrivada);
 
@@ -36,7 +37,7 @@ bool rsa_verify(const string& mensaje, const string& firma, const string& pathCl
     // Cargar la clave pública desde el archivo
     RSA::PublicKey clavePublica;
     FileSource file(pathClavePublica.c_str(), true);
-    clavePublica.Load(file);
+    PEM_Load(file, clavePublica);
 
     // Crear un objeto de verificación
     RSASS<PSSR, SHA256>::Verifier verifier(clavePublica);
