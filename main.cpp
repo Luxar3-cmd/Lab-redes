@@ -105,20 +105,21 @@ int main() {
     cout << " --- Lado de la hermana Lyra (Remitente) ---" << endl;
     // 1. Generar clave AES y IV aleatorios
     SecByteBlock aesKey, aesIV;
-    GenerateAESKeyAndIV(aesKey, aesIV); // Generación de clave AES y IV aleatorios
+    GenerateAESKeyAndIV(aesKey, aesIV); // Generación de clave AES (Cifrado Simétrico) y IV aleatorios
     cout << "Clave AES generada aleatoriamente (Hex): " << BytesToHex(aesKey,aesKey.size()) << endl;
     cout << "IV generado aleatoriamente (Hex): " << BytesToHex(aesIV, aesIV.size()) << endl;
     // 2. Cifrar el mensaje pesado con AES
-    string MensajeCifradoAES = aes_encrypt(mensajeSecreto, aesKey, aesIV); // Cifrado del mensaje con AES
+    string MensajeCifradoAES = aes_encrypt(mensajeSecreto, aesKey, aesIV); // Cifrado del mensaje con AES (Cifrado Simétrico)
     cout << "Mensaje cifrado con AES (Hex): " << MensajeCifradoAES << endl;
     // 3. Cargar la clave pública del Gran Maestro
     string pathClavePublica = "Claves/gm_publica.pem";
 
     // 4. Cifrar (RSA) la clave AES y el IV
     string keyIvBin;
-    keyIvBin.assign((char*)aesKey.BytePtr(), aesKey.SizeInBytes());
+    // Concatenar clave AES y IV en un solo string binario
+    keyIvBin.assign((char*)aesKey.BytePtr(), aesKey.SizeInBytes()); 
     keyIvBin.append((char*)aesIV.BytePtr(), aesIV.SizeInBytes());
-    string claveCifradaRSA = rsa_encrypt(keyIvBin, pathClavePublica, /*usePublicKey=*/true);
+    string claveCifradaRSA = rsa_encrypt(keyIvBin, pathClavePublica, true);
     cout << "Clave AES+IV cifrada (RSA hex): " << claveCifradaRSA << endl;
 
     // 5. Firmar el paquete AES-cipher + claveCifradaRSA con la privada de Lyra
@@ -139,7 +140,7 @@ int main() {
     // 2- Descifrar (RSA) clave AES+IV con la privada del Gran Maestro
     string pathGMPriv = "Claves/gm_privada.pem";
     string keyIvRec   = rsa_decrypt(claveCifradaRSA, pathGMPriv, /*usePublicKey=*/false);
-
+    // Recuperar clave AES y IV del string binario
     SecByteBlock aesKeyRec((const CryptoPP::byte*)keyIvRec.data(), AES::DEFAULT_KEYLENGTH);
     SecByteBlock aesIVRec((const CryptoPP::byte*)keyIvRec.data()+AES::DEFAULT_KEYLENGTH, AES::BLOCKSIZE);
 
