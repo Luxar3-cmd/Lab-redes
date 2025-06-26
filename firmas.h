@@ -24,12 +24,12 @@ string rsa_sign(const string& mensaje, const string& pathClavePrivada) {
     PEM_Load(file, clavePrivada);
     // Crear un objeto de firma
     RSASS<PSSR, SHA256>::Signer signer(clavePrivada);
-
-    // Generar la firma
     AutoSeededRandomPool rng;
-    string firma;
-    StringSource(mensaje, true, new SignerFilter(rng, signer, new StringSink(firma)));
-
+    // La longitud de la firma depende de la clave
+    size_t sigLen = signer.MaxSignatureLength();
+    string firma(sigLen, '\0');
+    sigLen = signer.SignMessage(rng, (const CryptoPP::byte*)mensaje.data(), mensaje.size(), (CryptoPP::byte*)&firma[0]);
+    firma.resize(sigLen);
     return firma;
 }
 
@@ -39,14 +39,11 @@ bool rsa_verify(const string& mensaje, const string& firma, const string& pathCl
     FileSource file(pathClavePublica.c_str(), true);
     PEM_Load(file, clavePublica);
 
-    // Crear un objeto de verificación
     RSASS<PSSR, SHA256>::Verifier verifier(clavePublica);
-
-    // Verificar la firma
-    StringSource ss(firma + mensaje, true,
-        new SignatureVerificationFilter(verifier, nullptr, SignatureVerificationFilter::THROW_EXCEPTION));
-
-    return true; // Si no se lanza una excepción, la firma es válida
+    bool result = verifier.VerifyMessage((const CryptoPP::byte*)mensaje.data(), mensaje.size(),
+                                         (const CryptoPP::byte*)firma.data(), firma.size());
+    if(!result) throw runtime_error("Firma no válida");
+    return true;
 }
 
 

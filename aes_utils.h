@@ -11,6 +11,8 @@
 using namespace CryptoPP;
 using namespace std;
 
+string binToHex(const string &bin);
+string hexToBin(const string &hex);
 
 
 
@@ -30,26 +32,20 @@ struct AESResult {
     Genera un IV aleatorio y devuelve el texto cifrado en formato hexadecimal.
     El IV se devuelve en formato hexadecimal a través del parámetro ivHexOut.
 */
-string aes_encrypt(const string &mensaje,const SecByteBlock &clave,string &ivHexOut) {
-    AutoSeededRandomPool prng;
-    CryptoPP::byte iv[AES::BLOCKSIZE];
-    prng.GenerateBlock(iv, sizeof(iv));
-
+string aes_encrypt(const string &mensaje,const SecByteBlock &clave,SecByteBlock& iv) {
     string cifrado;
     CBC_Mode<AES>::Encryption encriptador;
     encriptador.SetKeyWithIV(clave, clave.size(), iv); // Configura el cifrador con la clave y el IV
     StringSource(mensaje, true, new StreamTransformationFilter(encriptador, new StringSink(cifrado))); // Aquí se aplica el cifrado
 
-    ivHexOut = binToHex(string(reinterpret_cast<char*>(iv), AES::BLOCKSIZE)); // Esta linea convierte el IV a HEX
     return binToHex(cifrado);
 }
 /*
     Esta función descifra un texto cifrado en formato hexadecimal utilizando AES-128 en modo CBC.
 */
-string aes_decrypt( const string &cifradoHex,const SecByteBlock &clave,const string &ivHex) {
+string aes_decrypt( const string &cifradoHex,const SecByteBlock &clave,SecByteBlock& iv) {
 
     string cipher = hexToBin(cifradoHex);
-    string iv = hexToBin(ivHex);
     string recovered;
 
     CBC_Mode<AES>::Decryption decifrador;
@@ -59,14 +55,6 @@ string aes_decrypt( const string &cifradoHex,const SecByteBlock &clave,const str
     return recovered;
 }
 
-// Función combinada (encrypt + decrypt) para uso rápido en pruebas
-AESResult aesEncryptDecrypt( const string &mensaje,const CryptoPP::byte *clave, size_t claveLen) {
-    SecByteBlock key(clave, claveLen);
-    string ivHex;
-    string cipherHex = aes_encrypt(mensaje, key, ivHex);
-    string plain = aes_decrypt(cipherHex, key, ivHex);
-    return {cipherHex, plain, ivHex};
-}
 
 #endif // AES_UTILS_H
 

@@ -12,25 +12,9 @@
 using namespace std;
 using namespace CryptoPP;
 
-/*
-    Esta función convierte un string binario a su representación hexadecimal.
-    Utiliza HexEncoder para codificar el string binario.
-*/
-string binToHex(const string &bin) {
-    string hex;
-    StringSource(bin, true, new HexEncoder(new StringSink(hex)));
-    return hex;
-}
 
-/*
-    Esta función convierte un string hexadecimal a su representación binaria.
-    Utiliza HexDecoder para decodificar el string hexadecimal.
-*/
-string hexToBin(const string &hex) {
-    string bin;
-    StringSource(hex, true, new HexDecoder(new StringSink(bin)));
-    return bin;
-}
+string binToHex(const string &bin);
+string hexToBin(const string &hex);
 
 // Función que recibe un mensaje y una ruta de clave pública o privada, y devuelve el mensaje cifrado en formato hexadecimal.
 string rsa_encrypt(const string &mensaje, const string &path_clave, bool usePublicKey) {
@@ -42,7 +26,6 @@ string rsa_encrypt(const string &mensaje, const string &path_clave, bool usePubl
         CryptoPP::PEM_Load(fs, pub_key);
         RSAES_OAEP_SHA_Encryptor encriptador(pub_key); // Crear el encriptador RSA
         StringSource(mensaje, true, new PK_EncryptorFilter(rng, encriptador, new StringSink(cifrado))); // Cifrar el mensaje
-        cout << "test asdf" << endl;
         return binToHex(cifrado); // Convertir el mensaje cifrado a formato hexadecimal
     } else { // Si usePublicKey es false, se asume que se está utilizando una clave privada
         RSA::PrivateKey priv_key;
