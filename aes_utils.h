@@ -14,18 +14,6 @@ using namespace std;
 string binToHex(const string &bin);
 string hexToBin(const string &hex);
 
-
-
-/*
-    Estructura para almacenar el resultado de las operaciones AES.
-    Contiene el texto cifrado en formato hexadecimal, el texto plano recuperado y el IV utilizado.
-*/
-struct AESResult {
-    string cipherHex;
-    string plain;
-    string ivHex;
-};
-
 // ---------- Funciones requeridas ----------
 /*
     Cifra un texto plano utilizando AES-128 en modo CBC.
