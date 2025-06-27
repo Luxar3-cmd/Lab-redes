@@ -220,75 +220,130 @@ int main() {
     cout << "        ----------------------------- Canal Seguro -----------------------------      " << endl;
     cout << " --------------------------------------------------------------------------------------" << endl;
 
+    /*
+        Para establecer un canal seguro en tre Pedrius Godoyius y el Gran Maestro, mediante
+        cifrado asimétrico se cifrara la clave AES para que puedan establecer un canal seguro 
+    */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    string mensajeSecreto = "Los archivos antiguos, código MPSH476, revelan la ubicación del séptimo pergamino perdido"; // Mensaje proveniente de la hermana Lyra
-    cout << "Mensaje a cifrar: " << mensajeSecreto << endl;
-    cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -" << endl;
-    // Para que solamente el Gran Maestro pueda descifrar el mensaje, utilizaremos firmas digitales.
+    // Generar clave AES y IV aleatorios
     
-
-
-    // Emisor (Lyra) -> Receptor (Gran Maestro)
-    cout << " --- Lado de la hermana Lyra (Remitente) ---" << endl;
-    // 1. Generar clave AES y IV aleatorios
     SecByteBlock aesKey, aesIV;
     GenerateAESKeyAndIV(aesKey, aesIV); // Generación de clave AES (Cifrado Simétrico) y IV aleatorios
-    cout << "Clave AES generada aleatoriamente (Hex): " << BytesToHex(aesKey,aesKey.size()) << endl;
+
+
+    cout << endl;
+    cout << "Clave AES generada aleatoriamente (Hex): " << BytesToHex(aesKey, aesKey.size()) << endl;
+    cout << endl;
     cout << "IV generado aleatoriamente (Hex): " << BytesToHex(aesIV, aesIV.size()) << endl;
-    // 2. Cifrar el mensaje pesado con AES
-    string MensajeCifradoAES = aes_encrypt(mensajeSecreto, aesKey, aesIV); // Cifrado del mensaje con AES (Cifrado Simétrico)
-    cout << "Mensaje cifrado con AES (Hex): " << MensajeCifradoAES << endl;
-    // 3. Cargar la clave pública del Gran Maestro
-    string pathClavePublica = "Claves/gm_publica.pem";
+    cout << endl;
 
-    // 4. Cifrar (RSA) la clave AES y el IV
-    string keyIvBin;
-    // Concatenar clave AES y IV en un solo string binario
-    keyIvBin.assign((char*)aesKey.BytePtr(), aesKey.SizeInBytes()); 
-    keyIvBin.append((char*)aesIV.BytePtr(), aesIV.SizeInBytes());
-    string claveCifradaRSA = rsa_encrypt(keyIvBin, pathClavePublica, true);
-    cout << "Clave AES+IV cifrada (RSA hex): " << claveCifradaRSA << endl;
+    // Construir bloque clave+iv
+    string aesKEY_IV(reinterpret_cast<const char*>(aesKey.data()), aesKey.size());
+    aesKEY_IV += string(reinterpret_cast<const char*>(aesIV.data()), aesIV.size());
 
-    // 5. Firmar el paquete AES-cipher + claveCifradaRSA con la privada de Lyra
-    string pathLyraPriv = "Claves/lyra_privada.pem";
-    string payload      = MensajeCifradoAES + claveCifradaRSA;   //  concat en hex
-    string firmaBin     = rsa_sign(payload, pathLyraPriv);
-    cout << "Firma generada (hex): " << binToHex(firmaBin) << endl;
+    // Cargar Clave Privada Pedrius Godoyius
+    RSA::PrivateKey clavePrivadaPedrius; // Clave privada de Pedrius Godoyius
+    FileSource filePrivPedrius("Claves/pedrius_privada.der", true); // Cargar clave privada de Pedrius Godoyius desde archivo DER
+    clavePrivadaPedrius.BERDecode(filePrivPedrius); // Decodificar clave privada
 
-    /* ---------- Receptor: Gran Maestro ---------- */
-    cout << "\n--- Lado del Gran Maestro (Receptor) ---" << endl;
+    // Firmar clave+IV con clave privada del emisor, en este caso elegimos Pedrius Godoyius como emisor
+    string firmaClaveIV; 
+    RSASS<PSS, SHA256>::Signer firmantePedrius(clavePrivadaPedrius); 
+    StringSource(aesKEY_IV, true,
+        new SignerFilter(prng, firmantePedrius,
+            new StringSink(firmaClaveIV) // Firmar el bloque clave+IV
+        )
+    );
 
-    // 1- Verificar firma con la pública de Lyra
-    string pathLyraPub = "Claves/lyra_publica.pem";
-    if(!rsa_verify(payload, firmaBin, pathLyraPub))
-        throw runtime_error("Firma inválida");
-    cout << "Resultado verificación de firma: VÁLIDA" << endl;
+    string claveIVCifrada; // Clave AES+IV cifrada
+    RSAES_OAEP_SHA_Encryptor cifradorGM(clavePublicaGM); // Crear el cifrador RSA
+    StringSource(aesKEY_IV, true,
+        new PK_EncryptorFilter(prng, cifradorGM,    
+            new StringSink(claveIVCifrada) // Cifrar el bloque clave+IV
+        )
+    );
 
-    // 2- Descifrar (RSA) clave AES+IV con la privada del Gran Maestro
-    string pathGMPriv = "Claves/gm_privada.pem";
-    string keyIvRec   = rsa_decrypt(claveCifradaRSA, pathGMPriv, /*usePublicKey=*/false);
-    // Recuperar clave AES y IV del string binario
-    SecByteBlock aesKeyRec((const CryptoPP::byte*)keyIvRec.data(), AES::DEFAULT_KEYLENGTH);
-    SecByteBlock aesIVRec((const CryptoPP::byte*)keyIvRec.data()+AES::DEFAULT_KEYLENGTH, AES::BLOCKSIZE);
+    /*
+        Se asume que se transmiten concatenados claveIVCifrada + firmaClaveIV.
+    */
 
-    // 3- Descifrar (AES) el mensaje
-    string mensajeRec = aes_decrypt(MensajeCifradoAES, aesKeyRec, aesIVRec);
-    cout << "Mensaje descifrado por el Gran Maestro: " << mensajeRec << endl;
+    cout << "Resumen lado emisor (Pedrius Godoyius):" << endl;
+    cout << "Clave AES+IV cifrada (RSA): " << binToHex(claveIVCifrada) << endl;
+    cout << "Firma de la clave AES+IV (hex): " << binToHex(firmaClaveIV) << endl;
+    cout << "--------------------------------------------------------------------------------------" << endl;
+
+
+    cout << endl;
+    cout << "--- Lado Receptor (Gran Maestro) ---" << endl;
+
+    string claveIVRecibida; 
+    RSAES_OAEP_SHA_Decryptor descifradorGM(clavePrivadaGM); // Crear el descifrador RSA
+    StringSource(claveIVCifrada, true,
+        new PK_DecryptorFilter(prng, descifradorGM,
+            new StringSink(claveIVRecibida) // Descifrar el bloque clave+IV
+        )
+    );
+
+    
+    RSA::PublicKey clavePublicaPedrius; // Clave pública de Pedrius Godoyius
+    FileSource filePubPedrius("Claves/pedrius_publica.der", true); // Cargar clave pública de Pedrius Godoyius desde archivo DER
+    clavePublicaPedrius.BERDecode(filePubPedrius); // Decodificar clave pública 
+
+    // Verificar firma
+    RSASS<PSS, SHA256>::Verifier verificadorPedrius(clavePublicaPedrius); // Crear el verificador RSA
+    firmaValida = verificadorPedrius.VerifyMessage(
+        (const CryptoPP::byte*)claveIVRecibida.data(), claveIVRecibida.size(),
+        (const CryptoPP::byte*)firmaClaveIV.data(), firmaClaveIV.size()
+    );
+
+    SecByteBlock aesKeyRec, aesIVRec;
+
+    if (firmaValida) {
+        cout << "Firma verificada correctamente." << endl;
+        
+        // Separar clave AES y IV del bloque descifrado
+        aesKeyRec.Assign((const CryptoPP::byte*)claveIVRecibida.data(), 16);
+        aesIVRec.Assign((const CryptoPP::byte*)claveIVRecibida.data() + 16, AES::BLOCKSIZE);
+        cout << endl;
+        cout <<  "Clave AES recibida (Hex): " << BytesToHex(aesKeyRec, aesKeyRec.size()) << endl;
+        cout << endl;
+        cout << "IV recibido (Hex): " << BytesToHex(aesIVRec, aesIVRec.size()) << endl;
+        cout << endl;
+
+        cout << " Canal de comununicación establecido" << endl;
+
+
+    } else {
+        cout << "Firma inválida." << endl;
+        return 1; // Salir si la firma no es válida
+    }
+
+    /*
+        Ejemplo de intercambio de mensajes cifrados con AES en el canal seguro establecido
+    */
+
+    vector<string> remitentes = {"Pedrius", "Gran Maestro", "Pedrius", "Gran Maestro"};
+    vector<string> mensajes = {
+        "¿Has encontrado el cuarto sello?",
+        "Sí, pero los guardianes lo vigilan.",
+        "Debemos actuar al amanecer.",
+        "Estaré preparado. Que el templo nos guíe."
+    };
+
+    cout << endl;
+    cout << "\n --- Intercambio de mensajes cifrados en el canal seguro establecido --- \n" << endl;
+    for (size_t i = 0; i < mensajes.size(); ++i) {
+        cout << remitentes[i] << " (original): " << mensajes[i] << endl;
+        
+        // Usamos la clave compartida y el mismo IV acordado en canal seguro
+        string mensajeCifradoHex = aes_encrypt(mensajes[i], aesKeyRec, aesIVRec);
+        string mensajeDescifrado = aes_decrypt(mensajeCifradoHex, aesKeyRec, aesIVRec);
+        
+        cout << remitentes[i] << " (cifrado - hex): " << mensajeCifradoHex << endl;
+        cout << remitentes[i] << " (descifrado): " << mensajeDescifrado << "\n" << endl;
+    }
+        
+
     cout << "--------------------------------------------------------------------------------------" << endl;
 
     return 0;
