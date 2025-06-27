@@ -4,15 +4,10 @@
 #include <cryptopp/oaep.h>
 #include "rsa_utils.h"
 #include "aes_utils.h"
-#include "firmas.h"
+
 
 using namespace std;
 using namespace CryptoPP;
-
-void HexToBytes( const string& hex, CryptoPP::byte* bytes) {
-    StringSource(hex, true, new HexDecoder(new ArraySink(bytes, hex.size() / 2)));
-}
-
 
 /*
     Esta función convierte un array de bytes a su representación hexadecimal.
@@ -140,7 +135,6 @@ int main() {
     clavePrivadaLyra.BERDecode(filePriv);
 
     // Firmar el mensaje
-
     RSASS<PSS, SHA256>::Signer firmanteLyra(clavePrivadaLyra); // Crear el firmante RSA
     StringSource(mensaje, true,
         new SignerFilter(prng, firmanteLyra,
@@ -151,9 +145,9 @@ int main() {
     cout << "Firma generada (hex)" << binToHex(firma) << endl;
     cout << endl;
     // Cargar clave pública del Gran Maestro para cifrar
-    RSA::PublicKey clavePublicaGM; // Clave pública del Gran Maestro
+    RSA::PublicKey clavePublicaGM; 
     FileSource filePub("Claves/gm_publica.der", true); 
-    clavePublicaGM.BERDecode(filePub); // Cargar clave pública del Gran Maestro desde archivo DER
+    clavePublicaGM.BERDecode(filePub); 
 
     // Cifrar el mensaje con la clave pública del Gran Maestro
     RSAES_OAEP_SHA_Encryptor cifrador(clavePublicaGM);
@@ -162,27 +156,30 @@ int main() {
             new StringSink(mensajeCifrado) // Cifrar el mensaje
         )
     );
+
     cout << "Mensaje cifrado (RSA): " << binToHex(mensajeCifrado) << endl;
     cout << endl;
 
     cout << " --- Simulación Recepción ---" << endl;
 
     // Cargar clave privada del Gran Maestro para descifrar
-    RSA::PrivateKey clavePrivadaGM; // Clave privada del Gran Maestro
-    FileSource filePrivGM("Claves/gm_privada.der", true); // Cargar clave privada del Gran Maestro desde archivo DER
+    RSA::PrivateKey clavePrivadaGM; 
+    FileSource filePrivGM("Claves/gm_privada.der", true); 
     clavePrivadaGM.BERDecode(filePrivGM);
 
     // Descifrar el mensaje
     string mensajeDescifrado; 
-    RSAES_OAEP_SHA_Decryptor descifrador(clavePrivadaGM); // Crear el descifrador RSA
+    RSAES_OAEP_SHA_Decryptor descifrador(clavePrivadaGM); 
     StringSource(mensajeCifrado, true,
         new PK_DecryptorFilter(prng, descifrador,
-            new StringSink(mensajeDescifrado) // Descifrar el mensaje
+            new StringSink(mensajeDescifrado) 
         )
     );
+
     cout << endl;
     cout << "Mensaje descifrado (RSA): " << mensajeDescifrado << endl;
     cout << endl;
+
     // Cargar calve pública de Lyra para verificar la firma
     RSA::PublicKey clavePublicaLyra; // Clave pública de Lyra
     FileSource filePubLyra("Claves/lyra_publica.der", true);
@@ -194,6 +191,7 @@ int main() {
         (const CryptoPP::byte*)mensajeDescifrado.data(), mensajeDescifrado.size(),
         (const CryptoPP::byte*)firma.data(), firma.size()
     );
+
 
     if (firmaValida) {
         cout << endl;
@@ -242,31 +240,30 @@ int main() {
     aesKEY_IV += string(reinterpret_cast<const char*>(aesIV.data()), aesIV.size());
 
     // Cargar Clave Privada Pedrius Godoyius
-    RSA::PrivateKey clavePrivadaPedrius; // Clave privada de Pedrius Godoyius
-    FileSource filePrivPedrius("Claves/pedrius_privada.der", true); // Cargar clave privada de Pedrius Godoyius desde archivo DER
-    clavePrivadaPedrius.BERDecode(filePrivPedrius); // Decodificar clave privada
+    RSA::PrivateKey clavePrivadaPedrius; 
+    FileSource filePrivPedrius("Claves/pedrius_privada.der", true); 
+    clavePrivadaPedrius.BERDecode(filePrivPedrius); 
 
     // Firmar clave+IV con clave privada del emisor, en este caso elegimos Pedrius Godoyius como emisor
     string firmaClaveIV; 
     RSASS<PSS, SHA256>::Signer firmantePedrius(clavePrivadaPedrius); 
     StringSource(aesKEY_IV, true,
         new SignerFilter(prng, firmantePedrius,
-            new StringSink(firmaClaveIV) // Firmar el bloque clave+IV
+            new StringSink(firmaClaveIV) 
         )
     );
 
     string claveIVCifrada; // Clave AES+IV cifrada
-    RSAES_OAEP_SHA_Encryptor cifradorGM(clavePublicaGM); // Crear el cifrador RSA
+    RSAES_OAEP_SHA_Encryptor cifradorGM(clavePublicaGM); 
     StringSource(aesKEY_IV, true,
         new PK_EncryptorFilter(prng, cifradorGM,    
-            new StringSink(claveIVCifrada) // Cifrar el bloque clave+IV
+            new StringSink(claveIVCifrada) 
         )
     );
 
     /*
         Se asume que se transmiten concatenados claveIVCifrada + firmaClaveIV.
     */
-
     cout << "Resumen lado emisor (Pedrius Godoyius):" << endl;
     cout << "Clave AES+IV cifrada (RSA): " << binToHex(claveIVCifrada) << endl;
     cout << "Firma de la clave AES+IV (hex): " << binToHex(firmaClaveIV) << endl;
@@ -285,12 +282,12 @@ int main() {
     );
 
     
-    RSA::PublicKey clavePublicaPedrius; // Clave pública de Pedrius Godoyius
-    FileSource filePubPedrius("Claves/pedrius_publica.der", true); // Cargar clave pública de Pedrius Godoyius desde archivo DER
-    clavePublicaPedrius.BERDecode(filePubPedrius); // Decodificar clave pública 
+    RSA::PublicKey clavePublicaPedrius; 
+    FileSource filePubPedrius("Claves/pedrius_publica.der", true); 
+    clavePublicaPedrius.BERDecode(filePubPedrius); 
 
     // Verificar firma
-    RSASS<PSS, SHA256>::Verifier verificadorPedrius(clavePublicaPedrius); // Crear el verificador RSA
+    RSASS<PSS, SHA256>::Verifier verificadorPedrius(clavePublicaPedrius); 
     firmaValida = verificadorPedrius.VerifyMessage(
         (const CryptoPP::byte*)claveIVRecibida.data(), claveIVRecibida.size(),
         (const CryptoPP::byte*)firmaClaveIV.data(), firmaClaveIV.size()

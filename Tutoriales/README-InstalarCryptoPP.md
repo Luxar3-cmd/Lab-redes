@@ -15,9 +15,9 @@ sudo apt install libcrypto++-dev libcrypto++-doc libcrypto++-utils
 
 -----
 
-# Tutorial: Instalación de Crypto++ con Soporte PEM en Zorin OS (Compilación desde Fuente)
+# Tutorial: Instalación de Crypto++ con Soporte PEM (Compilación desde Fuente)
 
-Este tutorial te guiará paso a paso a través de la desinstalación de versiones anteriores de Crypto++, la preparación del entorno, la descarga, compilación e instalación de Crypto++ junto con el módulo PEM para permitir funciones como `PEM_Load`, y finalmente, cómo verificar que todo funciona correctamente en Zorin OS.
+Este tutorial te guiará paso a paso a través de la desinstalación de versiones anteriores de Crypto++, la preparación del entorno, la descarga, compilación e instalación de Crypto++ junto con el módulo PEM para permitir funciones como `PEM_Load`, y finalmente, cómo verificar que todo funciona correctamente.
 
 -----
 
@@ -234,5 +234,3 @@ Finalmente, ejecuta tu programa:
 ```
 
 Deberías ver una salida que indica que la clave pública se generó, se guardó en PEM, se cargó y se validó correctamente.
-
-¡Felicidades\! Ahora tienes Crypto++ instalado con soporte para PEM en tu Zorin OS. ¿Hay algo más en lo que pueda ayudarte con tu proyecto?
